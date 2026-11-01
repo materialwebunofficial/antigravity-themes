@@ -1,0 +1,30 @@
+antigravity-themes
+Copyright 2026 The antigravity-themes contributors
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+An unofficial project. It is not affiliated with, endorsed by or sponsored by
+Google LLC. "Antigravity" is a trademark of Google LLC.
+
+This product includes third-party work:
+
+1. md3e-web (@materialwebunofficial/md3e-web) 1.0.4 and 1.0.14
+   https://materialwebunofficial.github.io
+   Licensed under the Apache License, Version 2.0.
+   vendor/md3e/components.js is built from its md-loading-indicator,
+   md-progress-indicator and md-menu components and the modules they import
+   (1.0.14); themes/md3e-tokens.css is generated from its tokens and color
+   engine (1.0.4). See vendor/md3e/SOURCE.txt. Its own license and notice are
+   in vendor/md3e/LICENSE and vendor/md3e/NOTICE.
+
+2. Roboto (variable font), vendor/md3e/roboto-variable.woff2
+   Copyright The Roboto Project Authors.
+   Licensed under the SIL Open Font License, Version 1.1 (vendor/md3e/Roboto-OFL.txt).
+
+3. Material Symbols (glyph outlines in themes/md3e-icons.css and src/)
+   Copyright Google LLC.
+   Licensed under the Apache License, Version 2.0.
+
+4. Material Color Utilities (the color schemes in themes/md3e-tokens.css were
+   generated with md3e-web's port of it)
+   Copyright Google LLC.
+   Licensed under the Apache License, Version 2.0.

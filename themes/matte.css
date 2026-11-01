@@ -1,0 +1,390 @@
+/* ==========================================================================
+   "Matte": a theme for Antigravity Desktop (tested with 2.28)
+
+   Idea: matte, quiet, fast. A near-black window holds one rounded panel;
+   surfaces step up in small neutral increments, 1px hairlines carry the
+   structure, and the only bright thing is the send button. No gradients,
+   blur, grain, glow, masks or looping animation. Light mode is the same
+   structure inverted, from the token block after 00.
+
+   Built for speed (a full style recalc costs about what the stock app's
+   does):
+   - Almost everything is done through the app's own tokens; the app's
+     Tailwind classes then paint the components. Few rules = cheap recalc.
+   - The handful of rules end in an id, class or single attribute: no
+     :has(), no :is()/:where() lists on the right, no universal
+     pseudo-elements (scrollbars, *::before).
+   - --background is the panel color inside the panel and the window color
+     outside it, so the app's own opaque layers (pinned user message band,
+     transcript fade, sticky sidebar titles) match their surface with no
+     workarounds.
+
+   Cascade: unlayered rules beat Tailwind v4's @layer utilities; the app
+   writes its tokens and the VS Code theme inline on <html>, so sections 01
+   and 02 use !important. Never wrap this file in @layer.
+
+   Scope: :root[data-agy-theme="matte"]; loaded by src/theme-host.js.
+   ========================================================================== */
+
+
+/* 00 — Tokens -------------------------------------------------------------- */
+:root[data-agy-theme="matte"] {
+  /* Surfaces, back to front (neutral, no blue cast) */
+  --m-window: #0e0e10;   /* window frame, title bar, sidebar */
+  --m-panel:  #151517;   /* the conversation panel */
+  --m-raised: #1c1c1f;   /* composer, user message, cards, menus */
+  --m-high:   #26262a;   /* highlight inside raised things, tooltips */
+  --m-inset:  #111113;   /* code */
+
+  /* Hairlines and states (alpha white, reads the same on every surface) */
+  --m-line:   rgb(255 255 255 / 0.075);
+  --m-line-2: rgb(255 255 255 / 0.11);
+  --m-line-3: rgb(255 255 255 / 0.18);
+  --m-hover:  rgb(255 255 255 / 0.045);
+  --m-select: rgb(255 255 255 / 0.08);
+
+  /* Text — contrast on --m-panel */
+  --m-text-max: #f2f2f3;
+  --m-text:     #dcdcde;   /* 13.4:1 */
+  --m-text-2:   #a3a3a8;   /*  7.0:1 */
+  --m-text-3:   #86868c;   /*  4.9:1 */
+
+  /* The one bright thing */
+  --m-primary:     #ededee;
+  --m-primary-ink: #111113;
+  --m-strong:      #ffffff;   /* one step past --m-primary (button hover) */
+
+  /* Status, the Context card's segments, and the remaining literals */
+  --m-success: #6fbf8b;
+  --m-warning: #d9a35b;
+  --m-error:   #e06c6c;
+  --m-blue:    #7aa2f7;
+  --m-amber:   #e5a84b;
+  --m-teal:    #73daca;
+  --m-selection: rgb(255 255 255 / 0.16);
+  --m-lineno:    #5c5c60;
+  --m-scroll:    rgb(255 255 255 / 0.10);
+  --m-scroll-2:  rgb(255 255 255 / 0.18);
+  --m-scroll-3:  rgb(255 255 255 / 0.24);
+  --m-find:         rgb(217 163 91 / 0.24);
+  --m-find-current: rgb(217 163 91 / 0.55);
+  --m-find-border:  rgb(217 163 91 / 0.85);
+  --m-shadow:      rgb(0 0 0 / 0.7);
+  --m-shadow-menu: rgb(0 0 0 / 0.75);
+
+  --m-font-ui:      "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --m-font-display: "Segoe UI Variable Display", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --m-font-mono:    "Cascadia Mono", "Cascadia Code", Consolas, monospace;
+}
+
+/* Light mode: the app's own setting (System / Light / Dark, marked on
+   <body>), mirrored by theme-host.js as data-agy-mode. Same structure,
+   inverted: a light gray window holds a near-white panel, raised things are
+   white and carry the hairline, lines and states are alpha black, and the
+   one strong thing is the near-black send button. Every rule reads these
+   tokens, so nothing else changes. Contrast on --m-panel. */
+:root[data-agy-theme="matte"][data-agy-mode="light"] {
+  --m-window: #ebebed;
+  --m-panel:  #f8f8f9;
+  --m-raised: #ffffff;
+  --m-high:   #e7e7ea;
+  --m-inset:  #f1f1f3;
+
+  --m-line:   rgb(0 0 0 / 0.08);
+  --m-line-2: rgb(0 0 0 / 0.12);
+  --m-line-3: rgb(0 0 0 / 0.22);
+  --m-hover:  rgb(0 0 0 / 0.04);
+  --m-select: rgb(0 0 0 / 0.07);
+
+  --m-text-max: #0b0b0d;
+  --m-text:     #1d1d20;   /* 15.8:1 */
+  --m-text-2:   #4b4b51;   /*  8.2:1 */
+  --m-text-3:   #626268;   /*  5.7:1, 5.1:1 on the window */
+
+  --m-primary:     #18181b;
+  --m-primary-ink: #f6f6f7;
+  --m-strong:      #000000;
+
+  --m-success: #277045;
+  --m-warning: #94560a;
+  --m-error:   #b3373a;
+  --m-blue:    #3a63c4;
+  --m-amber:   #a86a12;
+  --m-teal:    #1f7f71;
+  --m-selection: rgb(0 0 0 / 0.12);
+  --m-lineno:    #8e8e94;
+  --m-scroll:    rgb(0 0 0 / 0.14);
+  --m-scroll-2:  rgb(0 0 0 / 0.24);
+  --m-scroll-3:  rgb(0 0 0 / 0.32);
+  --m-find:         rgb(168 106 18 / 0.18);
+  --m-find-current: rgb(168 106 18 / 0.40);
+  --m-find-border:  rgb(168 106 18 / 0.8);
+  --m-shadow:      rgb(0 0 0 / 0.16);
+  --m-shadow-menu: rgb(0 0 0 / 0.18);
+}
+
+
+/* 01 — Bridge: app tokens (inline on <html>, hence !important) ------------ */
+:root[data-agy-theme="matte"] {
+  --background: var(--m-window) !important;   /* re-pointed to --m-panel inside the panel (10) */
+  --content: var(--m-panel) !important;
+  --foreground: var(--m-text) !important;
+  --primary: var(--m-primary) !important;
+  --primary-foreground: var(--m-primary-ink) !important;
+  --secondary: var(--m-high) !important;
+  --secondary-foreground: var(--m-text-2) !important;
+  --muted: var(--m-raised) !important;
+  --muted-foreground: var(--m-text-3) !important;
+  --placeholder: var(--m-text-3) !important;
+  --border: var(--m-line) !important;
+  --card: var(--m-raised) !important;
+  --card-border: var(--m-line-2) !important;
+  --sidebar: var(--m-window) !important;
+  --sidebar-secondary: var(--m-select) !important;
+  --sidebar-muted: var(--m-raised) !important;
+  --link: var(--m-text-max) !important;
+  --code-foreground: var(--m-text) !important;
+  --success: var(--m-success) !important;
+  --warning: var(--m-warning) !important;
+  --error: var(--m-error) !important;
+  /* find in conversation / code */
+  --editor-find-match-background: var(--m-find) !important;
+  --editor-find-current-background: var(--m-find-current) !important;
+  --editor-find-current-border: var(--m-find-border) !important;
+}
+
+:root[data-agy-theme="matte"] {
+  --font-sans: var(--m-font-ui);
+  --font-mono: var(--m-font-mono);
+  --ring: var(--m-line-3);
+  --rt-color-dark: var(--m-high);
+  --rt-color-white: var(--m-text);
+  --rt-opacity: 1;
+}
+
+:root[data-agy-theme="matte"] body {
+  --focus-ring-color: var(--m-line-3);
+}
+
+/* Code colors: the app writes its code-color setting inline on <body>
+   (hence !important); while a theme is on, the theme owns them */
+:root[data-agy-theme="matte"] .theme-dark {
+  --syntax-default-fg: #d4d4d4 !important;
+  --syntax-comment: #6e6e6e !important;
+  --syntax-punctuation: #d4d4d4 !important;
+  --syntax-operator: #d4d4d4 !important;
+  --syntax-variable: #d4d4d4 !important;
+  --syntax-keyword: #d19a66 !important;
+  --syntax-string: #a5c995 !important;
+  --syntax-attr-value: #a5c995 !important;
+  --syntax-inserted: #a5c995 !important;
+  --syntax-attr-name: #e3c98a !important;
+  --syntax-builtin: #e3c98a !important;
+  --syntax-function: #e3c98a !important;
+  --syntax-class-name: #e3c98a !important;
+  --syntax-number: #dca8a0 !important;
+  --syntax-constant: #dca8a0 !important;
+  --syntax-property: #e08b8b !important;
+  --syntax-tag: #e08b8b !important;
+  --syntax-deleted: #e08b8b !important;
+  --syntax-regex: #d9a066 !important;
+  --bg-selection: var(--m-selection) !important;
+  --bg-selection-overlay: var(--m-selection) !important;
+  --bg-cursor-line: var(--m-hover) !important;
+}
+/* The same quiet palette, dark enough for --m-inset (all 4.2:1 or more) */
+:root[data-agy-theme="matte"] .theme-light {
+  --syntax-default-fg: #24242a !important;
+  --syntax-comment: #727279 !important;
+  --syntax-punctuation: #24242a !important;
+  --syntax-operator: #24242a !important;
+  --syntax-variable: #24242a !important;
+  --syntax-keyword: #984a14 !important;
+  --syntax-string: #3d6b29 !important;
+  --syntax-attr-value: #3d6b29 !important;
+  --syntax-inserted: #3d6b29 !important;
+  --syntax-attr-name: #755600 !important;
+  --syntax-builtin: #755600 !important;
+  --syntax-function: #755600 !important;
+  --syntax-class-name: #755600 !important;
+  --syntax-number: #9c3d34 !important;
+  --syntax-constant: #9c3d34 !important;
+  --syntax-property: #a1393b !important;
+  --syntax-tag: #a1393b !important;
+  --syntax-deleted: #a1393b !important;
+  --syntax-regex: #86500a !important;
+  --bg-selection: var(--m-selection) !important;
+  --bg-selection-overlay: var(--m-selection) !important;
+  --bg-cursor-line: var(--m-hover) !important;
+}
+
+
+/* 02 — Bridge: VS Code vars (inline on <html>; One Dark = the blue cast) -- */
+:root[data-agy-theme="matte"] {
+  --vscode-foreground: var(--m-text) !important;
+  --vscode-focusBorder: var(--m-line-3) !important;
+  --vscode-textLink-foreground: var(--m-text-max) !important;
+  --vscode-textCodeBlock-background: var(--m-inset) !important;
+  --vscode-sideBar-background: var(--m-window) !important;
+  --vscode-editor-background: var(--m-inset) !important;
+  --vscode-editor-foreground: var(--m-text) !important;
+  --vscode-editor-lineHighlightBackground: var(--m-hover) !important;
+  --vscode-editor-selectionBackground: var(--m-selection) !important;
+  --vscode-editorCursor-foreground: var(--m-text-max) !important;
+  --vscode-editorLineNumber-foreground: var(--m-lineno) !important;
+  --vscode-editorLineNumber-activeForeground: var(--m-text-2) !important;
+  --vscode-editor-findMatchBackground: rgb(217 163 91 / 0.40) !important;
+  --vscode-editor-findMatchHighlightBackground: rgb(217 163 91 / 0.20) !important;
+  --vscode-editorWidget-background: var(--m-raised) !important;
+  --vscode-editorWidget-border: var(--m-line-2) !important;
+  --vscode-editorHoverWidget-background: var(--m-raised) !important;
+  --vscode-editorHoverWidget-border: var(--m-line-2) !important;
+  --vscode-input-background: var(--m-raised) !important;
+  --vscode-input-border: var(--m-line-2) !important;
+  --vscode-dropdown-background: var(--m-raised) !important;
+  --vscode-dropdown-border: var(--m-line-2) !important;
+  --vscode-button-background: var(--m-primary) !important;
+  --vscode-button-foreground: var(--m-primary-ink) !important;
+  --vscode-button-hoverBackground: var(--m-strong) !important;
+  --vscode-badge-background: var(--m-high) !important;
+  --vscode-badge-foreground: var(--m-text) !important;
+  --vscode-list-hoverBackground: var(--m-hover) !important;
+  --vscode-list-focusBackground: var(--m-select) !important;
+  --vscode-list-activeSelectionBackground: var(--m-select) !important;
+  --vscode-list-inactiveSelectionBackground: var(--m-hover) !important;
+  --vscode-scrollbarSlider-background: var(--m-scroll) !important;
+  --vscode-scrollbarSlider-hoverBackground: var(--m-scroll-2) !important;
+  --vscode-scrollbarSlider-activeBackground: var(--m-scroll-3) !important;
+  --vscode-diffEditor-insertedLineBackground: rgb(111 191 139 / 0.10) !important;
+  --vscode-diffEditor-insertedTextBackground: rgb(111 191 139 / 0.22) !important;
+  --vscode-diffEditor-removedLineBackground: rgb(224 108 108 / 0.10) !important;
+  --vscode-diffEditor-removedTextBackground: rgb(224 108 108 / 0.22) !important;
+}
+
+
+/* 03 — Base ---------------------------------------------------------------- */
+:root[data-agy-theme="matte"] body {
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: var(--m-selection);
+}
+/* The app's ::highlight rules read the find colors crosswise (every match
+   in the "current" color): restated the right way round */
+:root[data-agy-theme="matte"] ::highlight(find-match-highlight) {
+  background-color: var(--editor-find-match-background);
+}
+:root[data-agy-theme="matte"] ::highlight(find-match-current) {
+  background-color: var(--editor-find-current-background);
+}
+
+
+/* 10 — Frame: one rounded panel in a darker window ------------------------- */
+/* The content pane (Tailwind class group/pane, one per pane) becomes the
+   panel. Re-pointing --background (and Tailwind's resolved
+   --color-background) here makes every bg-background / var(--background)
+   layer inside the panel match it: the pinned user-message band, the fade
+   above the composer, sticky headers. */
+:root[data-agy-theme="matte"] .group\/pane {
+  --background: var(--m-panel);
+  --color-background: var(--m-panel);
+  width: auto;
+  height: calc(100% - 8px);
+  /* No outline: flush against the sidebar a 1px ring reads as a divider.
+     Tone alone (#151517 on #0e0e10) marks the panel; a 6px gap lets its
+     corners read as a card. */
+  margin: 0 8px 8px 6px;
+  border-radius: 14px;
+  background: var(--m-panel);
+  overflow: hidden;
+}
+
+/* Full-height 1px divider between sidebar and panel (holds the resize sash,
+   so it keeps its box; only the line goes). Tailwind class hook. */
+:root[data-agy-theme="matte"] .bg-border.flex-shrink-0.z-30.h-full {
+  background: transparent;
+}
+
+/* The right-hand pane (terminal, task output, files): its tab strip stays
+   on the window like the conversation's title row, and the content below
+   it becomes the same rounded panel. Markup (2.26):
+   flex-col > [data-active-tab-id] (tab strip, border-b) + .flex-grow */
+:root[data-agy-theme="matte"] [data-active-tab-id] {
+  border-bottom-color: transparent;
+}
+:root[data-agy-theme="matte"] [data-active-tab-id] + .flex-grow {
+  --background: var(--m-panel);
+  --color-background: var(--m-panel);
+  margin: 0 8px 8px 0;
+  border-radius: 14px;
+  background: var(--m-panel);
+}
+
+
+/* 20 — Sidebar ------------------------------------------------------------- */
+/* Row hover is the app's own hover:bg-sidebar-muted: it also sets --row-bg,
+   which the action buttons' fade gradient uses, so the two always match.
+   (A separate hover color here left a lighter block behind the buttons.)
+   The action group sat 4px past the row's end; keep it inside the corners.
+   Tailwind class hook. */
+:root[data-agy-theme="matte"] [data-testid="conversation-row-sidebar"] .pl-6.justify-end {
+  right: 0;
+  border-radius: 0 8px 8px 0;
+}
+:root[data-agy-theme="matte"] [data-testid="conversation-row-sidebar"][data-selected="true"] span {
+  color: var(--m-text-max);
+}
+
+
+/* 30 — Conversation -------------------------------------------------------- */
+:root[data-agy-theme="matte"] [role="article"] h1,
+:root[data-agy-theme="matte"] [role="article"] h2,
+:root[data-agy-theme="matte"] [role="article"] h3 {
+  font-family: var(--m-font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--m-text-max);
+}
+:root[data-agy-theme="matte"] [role="article"] a {
+  text-decoration: underline;
+  text-decoration-color: var(--m-line-3);
+  text-underline-offset: 3px;
+}
+:root[data-agy-theme="matte"] [role="article"] a:hover {
+  text-decoration-color: var(--m-text-2);
+}
+/* Fenced code: the card inside <pre> (bg-muted) sits darker than the panel */
+:root[data-agy-theme="matte"] [role="article"] pre > div {
+  border-radius: 12px;
+  background: var(--m-inset);
+  --agy-lineno: var(--m-lineno);   /* code-tools.js line numbers */
+}
+
+
+/* 40 — Composer ------------------------------------------------------------ */
+/* The shell's 1px ring is its padded background (p-px bg-card-border).
+   Focus only brightens that ring: no movement, no glow. The app's own
+   click-anywhere-to-focus is opted out for the transcript in
+   src/theme-host.js. */
+:root[data-agy-theme="matte"] [id="antigravity.agentSidePanelInputBox"] {
+  box-shadow: 0 10px 28px -14px var(--m-shadow);
+}
+:root[data-agy-theme="matte"] [id="antigravity.agentSidePanelInputBox"]:focus-within {
+  background: var(--m-line-3);
+}
+
+
+/* 50 — Menus & tooltips ---------------------------------------------------- */
+:root[data-agy-theme="matte"] [role="menu"] {
+  border-color: var(--m-line-2);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px -12px var(--m-shadow-menu);
+}
+/* App tooltips are bg-card, the composer's color: give them their own
+   surface so "Select Model Ctrl+/" never reads as text over the input. */
+:root[data-agy-theme="matte"] .compact-tooltip {
+  border-color: var(--m-line-2);
+  background: var(--m-high);
+  color: var(--m-text-max);
+  box-shadow: 0 8px 20px -8px var(--m-shadow);
+}

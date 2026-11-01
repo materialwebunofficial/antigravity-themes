@@ -1,0 +1,42 @@
+{
+  "name": "@materialwebunofficial/antigravity-themes",
+  "version": "1.0.0",
+  "description": "Matte and Material 3 Expressive themes for Antigravity Desktop, applied without changing the app's files.",
+  "homepage": "https://github.com/materialwebunofficial/antigravity-themes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/materialwebunofficial/antigravity-themes.git"
+  },
+  "bugs": {
+    "url": "https://github.com/materialwebunofficial/antigravity-themes/issues"
+  },
+  "type": "module",
+  "bin": {
+    "antigravity-themes": "bin/cli.mjs"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "src/",
+    "themes/",
+    "vendor/",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "antigravity",
+    "theme",
+    "material-design",
+    "material-3",
+    "material-3-expressive",
+    "md3e"
+  ],
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  }
+}
