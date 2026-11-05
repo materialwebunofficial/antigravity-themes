@@ -1,7 +1,10 @@
 {
   "default": "matte",
   "themes": {
+    "antigravity": [],
     "matte": ["matte.css"],
+    "paper": ["paper.css"],
+    "nordic": ["nordic.css"],
     "md3e": ["md3e-tokens.css", "md3e.css", "md3e-icons.css"]
   },
   "fonts": {
@@ -11,11 +14,14 @@
   },
   "ripple": ["md3e"],
   "options": [
-    { "key": "matte",       "name": "Matte",                 "theme": "matte", "swatch": "#ededee" },
-    { "key": "md3e-teal",   "name": "Material 3 · Teal",     "theme": "md3e",  "swatch": "#a5faf9" },
-    { "key": "md3e-ocean",  "name": "Material 3 · Ocean",    "theme": "md3e",  "seed": "ocean",  "swatch": "#9ecefe" },
-    { "key": "md3e-forest", "name": "Material 3 · Forest",   "theme": "md3e",  "seed": "forest", "swatch": "#c8f2ae" },
-    { "key": "md3e-amber",  "name": "Material 3 · Amber",    "theme": "md3e",  "seed": "amber",  "swatch": "#fecd79" },
-    { "key": "md3e-coral",  "name": "Material 3 · Coral",    "theme": "md3e",  "seed": "coral",  "swatch": "#ffa6a8" }
+    { "key": "antigravity", "name": "Antigravity (Varsayılan)", "theme": "antigravity", "swatch": "transparent" },
+    { "key": "matte",       "name": "Matte",                   "theme": "matte",       "swatch": "#ededee" },
+    { "key": "paper",       "name": "E-Ink / Paper",           "theme": "paper",       "swatch": "#e5e5e5" },
+    { "key": "nordic",      "name": "Nordic Frost",            "theme": "nordic",      "swatch": "#88c0d0" },
+    { "key": "md3e-teal",   "name": "Teal",                    "theme": "md3e",        "seed": "teal",   "swatch": "#a5faf9" },
+    { "key": "md3e-ocean",  "name": "Ocean",                   "theme": "md3e",        "seed": "ocean",  "swatch": "#9ecefe" },
+    { "key": "md3e-forest", "name": "Forest",                  "theme": "md3e",        "seed": "forest", "swatch": "#c8f2ae" },
+    { "key": "md3e-amber",  "name": "Amber",                   "theme": "md3e",        "seed": "amber",  "swatch": "#fecd79" },
+    { "key": "md3e-coral",  "name": "Coral",                   "theme": "md3e",        "seed": "coral",  "swatch": "#ffa6a8" }
   ]
 }

@@ -1,24 +1,33 @@
-// Antigravity Themes host: applies one theme from a bundle, remembers the choice, and
+// AGY theme host: applies one theme from a bundle, remembers the choice, and
 // adds a "Theme" menu to the title bar (Ctrl+Shift+F12 cycles themes; not
-// Ctrl+Alt+<letter>: Windows reads Ctrl+Alt as AltGr, which types
-// characters on many keyboard layouts). In MD3E the title bar's menus and Theme fold
+// Ctrl+Alt+<letter>: Windows reads Ctrl+Alt as AltGr, and on the Turkish Q
+// layout AltGr+T types "₺"). In MD3E the title bar's menus and Theme fold
 // into one app menu button (the package's <md-menu>).
 //
-// Context-free on purpose: it only touches the DOM and document.cookie. The
-// injector (lib/injector.mjs) evaluates it in every Antigravity window.
+// Context-free on purpose: it only touches the DOM and document.cookie, so it
+// runs the same when inject.mjs evaluates it in the page and when a preload
+// calls it from Electron's isolated world.
 function agyThemeHost(bundle) {
   // Bump when this file's code changes. A same-version host only takes the
   // new bundle; an older one would keep running its old code through
   // update(), so it is disposed and replaced (same task: no flash).
-  const HOST_VERSION = 17;   // also bump when a module it starts (context-card, turn-tokens, loading-/progress-indicator, code-tools) changes: the host starts them once
+  const HOST_VERSION = 20;   // also bump when a module it starts (context-card, turn-tokens, loading-/progress-indicator, code-tools) changes: the host starts them once
   const existing = window.__agyThemeHost;
   if (existing?.version === HOST_VERSION) return existing.update(bundle);
   existing?.dispose();
 
   const COOKIE = 'agy-theme';
-  const readChoice = () => (document.cookie.match(/(?:^|;\s*)agy-theme=([^;]+)/) || [])[1];
+  const readChoice = () => {
+    try {
+      return (document.cookie.match(/(?:^|;\s*)agy-theme=([^;]+)/) || [])[1];
+    } catch {
+      return null;
+    }
+  };
   const saveChoice = (key) => {
-    document.cookie = `${COOKIE}=${key}; Max-Age=31536000; Path=/; SameSite=Strict; Secure`;
+    try {
+      document.cookie = `${COOKIE}=${key}; Max-Age=31536000; Path=/; SameSite=Strict; Secure`;
+    } catch {}
   };
 
   let options = new Map();
@@ -88,21 +97,29 @@ function agyThemeHost(bundle) {
     ensureFonts();
     watchMode();
     syncMode();
-    root.setAttribute('data-agy-theme', current.theme);
-    if (current.seed) root.setAttribute('data-agy-seed', current.seed);
-    else root.removeAttribute('data-agy-seed');
-    let style = document.getElementById('agy-theme-css');
-    if (!style) {
-      style = document.createElement('style');
-      style.id = 'agy-theme-css';
+    if (current.theme === 'antigravity') {
+      root.removeAttribute('data-agy-theme');
+      root.removeAttribute('data-agy-seed');
+      const style = document.getElementById('agy-theme-css');
+      if (style) style.textContent = '';
+    } else {
+      root.setAttribute('data-agy-theme', current.theme);
+      if (current.seed) root.setAttribute('data-agy-seed', current.seed);
+      else root.removeAttribute('data-agy-seed');
+      let style = document.getElementById('agy-theme-css');
+      if (!style) {
+        style = document.createElement('style');
+        style.id = 'agy-theme-css';
+      }
+      const css = bundle.themes[current.theme] || '';
+      if (style.textContent !== css) style.textContent = css;
+      // Last in <head> so equal-specificity ties go to the theme
+      const parent = document.head || root;
+      if (style.parentNode !== parent || style !== parent.lastElementChild) parent.appendChild(style);
     }
-    const css = bundle.themes[current.theme] || '';
-    if (style.textContent !== css) style.textContent = css;
-    // Last in <head> so equal-specificity ties go to the theme
-    const parent = document.head || root;
-    if (style.parentNode !== parent || style !== parent.lastElementChild) parent.appendChild(style);
     announceTheme();
     renderMenu();
+    if (appMenuBuilt) buildAppMenu(false);
     if (current.theme !== 'md3e') closeAppMenu();
     // Themes change the title bar's padding and font: re-anchor the menu
     requestAnimationFrame(() => { position(); syncTitleBarOverlay(); });
@@ -186,15 +203,25 @@ function agyThemeHost(bundle) {
           box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.75);
         }
         .menu[hidden] { display: none; }
-        [role="menuitemradio"] {
+        [role="menuitemradio"], .menu-sub-trigger {
           display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px;
           border-radius: 8px; font: inherit; color: inherit; cursor: default; outline: none;
         }
-        [role="menuitemradio"]:hover, [role="menuitemradio"]:focus-visible { background: var(--secondary, #333); }
+        [role="menuitemradio"]:hover, [role="menuitemradio"]:focus-visible,
+        .menu-sub-trigger:hover, .menu-sub-wrapper:hover .menu-sub-trigger { background: var(--secondary, #333); }
         .swatch { width: 12px; height: 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2); }
         .name { flex: 1; }
         .check { visibility: hidden; }
         [aria-checked="true"] .check { visibility: visible; }
+        .chevron { color: var(--muted-foreground, #999); font-size: 13px; margin-left: auto; }
+        .menu-sub-wrapper { position: relative; }
+        .menu-sub-flyout {
+          display: none; position: absolute; top: -6px; left: calc(100% + 4px); min-width: 170px; padding: 6px;
+          border: 1px solid var(--border, #333); border-radius: 12px;
+          background: var(--card, #1c1c1f); color: var(--foreground, #eee);
+          box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.75);
+        }
+        .menu-sub-wrapper:hover .menu-sub-flyout { display: block; }
         .hint { padding: 6px 10px 2px; color: var(--muted-foreground, #999); font-size: 11px; }
 
         /* MD3E: the md-menu anatomy of md3e.css section 50 (one
@@ -241,10 +268,13 @@ function agyThemeHost(bundle) {
 
         /* MD3E app menu: an xsmall M3 icon button (32px, 20px icon); the
            <md-menu> it opens draws itself */
-        .appmenu { display: none; }
+        .appmenu { display: none; min-width: 220px; }
         :host-context([data-agy-theme="md3e"][data-agy-appmenu]) .trigger,
         :host-context([data-agy-theme="md3e"][data-agy-appmenu]) .menu { display: none !important; }
         :host-context([data-agy-theme="md3e"][data-agy-appmenu]) .appmenu { display: block; }
+        .appmenu md-menu {
+          min-width: 220px;
+        }
         .appmenu-trigger {
           display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0;
           border-radius: 9999px; background: transparent; color: var(--md-sys-color-on-surface-variant);
@@ -266,18 +296,27 @@ function agyThemeHost(bundle) {
     trigger.addEventListener('click', () => (menu.hidden ? openMenu() : closeMenu()));
     menu.addEventListener('click', (e) => {
       const item = e.target.closest('[role="menuitemradio"]');
-      if (item) { select(item.dataset.key); closeMenu(); }
+      if (item) { select(item.dataset.key); closeMenu(); return; }
+      const subTrig = e.target.closest('.menu-sub-trigger');
+      if (subTrig) {
+        const activeSeed = [...options.values()].find((o) => o.theme === 'md3e' && o.key === current?.key);
+        select(activeSeed ? activeSeed.key : 'md3e-teal');
+        closeMenu();
+      }
     });
     menu.addEventListener('keydown', onMenuKey);
     document.body.appendChild(hostEl);
     renderMenu();
+    if (appMenuBuilt) buildAppMenu(false);
     position();
   }
 
   function renderMenu() {
     if (!menu) return;
     menu.innerHTML = '';
+    // Standalone options
     for (const o of options.values()) {
+      if (o.theme === 'md3e') continue;
       const item = document.createElement('div');
       item.setAttribute('role', 'menuitemradio');
       item.setAttribute('aria-checked', String(o.key === current?.key));
@@ -287,6 +326,38 @@ function agyThemeHost(bundle) {
       item.querySelector('.swatch').style.background = o.swatch || 'transparent';
       item.querySelector('.name').textContent = o.name;
       menu.appendChild(item);
+    }
+    // Group MD3E into single entry with submenu flyout
+    const md3eOptions = [...options.values()].filter((o) => o.theme === 'md3e');
+    if (md3eOptions.length) {
+      const isMd3eActive = current?.theme === 'md3e';
+      const subWrapper = document.createElement('div');
+      subWrapper.className = 'menu-sub-wrapper';
+      const subTrigger = document.createElement('div');
+      subTrigger.className = 'menu-sub-trigger';
+      subTrigger.setAttribute('role', 'button');
+      subTrigger.tabIndex = -1;
+      subTrigger.innerHTML = '<span class="swatch" style="background:#a5faf9"></span><span class="name">Material 3 Expressive</span><span class="check">✓</span><span class="chevron">›</span>';
+      if (!isMd3eActive) subTrigger.querySelector('.check').style.visibility = 'hidden';
+      else subTrigger.querySelector('.check').style.visibility = 'visible';
+      subWrapper.appendChild(subTrigger);
+
+      const flyout = document.createElement('div');
+      flyout.className = 'menu-sub-flyout';
+      flyout.setAttribute('role', 'menu');
+      for (const o of md3eOptions) {
+        const item = document.createElement('div');
+        item.setAttribute('role', 'menuitemradio');
+        item.setAttribute('aria-checked', String(o.key === current?.key));
+        item.tabIndex = -1;
+        item.dataset.key = o.key;
+        item.innerHTML = '<span class="swatch"></span><span class="name"></span><span class="check">✓</span>';
+        item.querySelector('.swatch').style.background = o.swatch || 'transparent';
+        item.querySelector('.name').textContent = o.name;
+        flyout.appendChild(item);
+      }
+      subWrapper.appendChild(flyout);
+      menu.appendChild(subWrapper);
     }
     const hint = document.createElement('div');
     hint.className = 'hint';
@@ -344,8 +415,25 @@ function agyThemeHost(bundle) {
     return sub;
   }
 
+  function patchComponentSheets() {
+    try {
+      const dummyItem = document.createElement('md-menu-item');
+      if (dummyItem.shadowRoot?.adoptedStyleSheets?.length) {
+        const s = dummyItem.shadowRoot.adoptedStyleSheets[0];
+        s.insertRule('.text { white-space: nowrap !important; overflow-wrap: normal !important; max-width: none !important; }', 0);
+        s.insertRule('.item { min-width: 220px !important; max-width: 320px !important; }', 0);
+      }
+      const dummyMenu = document.createElement('md-menu');
+      if (dummyMenu.shadowRoot?.adoptedStyleSheets?.length) {
+        const ms = dummyMenu.shadowRoot.adoptedStyleSheets[0];
+        ms.insertRule('.menu { min-width: 220px !important; max-width: 320px !important; will-change: transform, opacity !important; }', 0);
+      }
+    } catch {}
+  }
+
   function mountAppMenu() {
     if (!customElements.get('md-menu')) return;
+    patchComponentSheets();
     appMenu = document.createElement('md-menu');
     appMenu.className = 'appmenu';
     appMenu.setAttribute('label', 'Application menu');
@@ -356,13 +444,9 @@ function agyThemeHost(bundle) {
     appTrigger.title = 'Menu';
     appTrigger.appendChild(glyph('menu'));
     appMenu.appendChild(appTrigger);
-    // The items are built before the press, while the pointer comes over the
-    // button or it takes focus: built on the click, the ~25 new elements cost
-    // the opening its first frame. The click and keys only catch a change.
-    appTrigger.addEventListener('pointerenter', buildAppMenu);
-    appTrigger.addEventListener('focus', buildAppMenu);
-    appTrigger.addEventListener('click', buildAppMenu);
-    appTrigger.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') buildAppMenu(); });
+    // these run before the menu's own handlers on its trigger slot
+    appTrigger.addEventListener('click', () => buildAppMenu(false));
+    appTrigger.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') buildAppMenu(false); });
     appMenu.addEventListener('select', onAppMenuSelect);
     shadow.appendChild(appMenu);
     document.documentElement.setAttribute('data-agy-appmenu', '');
@@ -381,15 +465,55 @@ function agyThemeHost(bundle) {
     return menus;
   }
 
-  let builtFor = '';
-  function buildAppMenu() {
-    if (!appMenu || appMenu.open) return;
-    const menus = readAppMenus();
-    // rebuilt only when the app's menus or the chosen theme changed
-    const signature = JSON.stringify([current?.key, menus.map((m) => [m.title, m.options.map((o) => [String(o.label), o.shortcut, !!o.nonSelectable])])]);
-    if (signature === builtFor) { appMenus = menus; return; }
-    builtFor = signature;
-    appMenus = menus;
+  function fixItemStyle(el) {
+    if (!el || !el.shadowRoot) return;
+    try {
+      let s = el.shadowRoot.querySelector('#agy-item-fix');
+      if (!s) {
+        s = document.createElement('style');
+        s.id = 'agy-item-fix';
+        s.textContent = `
+          .text { white-space: nowrap !important; overflow-wrap: normal !important; max-width: none !important; }
+          .item { min-width: 220px !important; max-width: 320px !important; }
+        `;
+        el.shadowRoot.appendChild(s);
+      }
+    } catch {}
+  }
+
+  function fixMenuStyle(menu) {
+    if (!menu || !menu.shadowRoot) return;
+    try {
+      let s = menu.shadowRoot.querySelector('#agy-menu-fix');
+      if (!s) {
+        s = document.createElement('style');
+        s.id = 'agy-menu-fix';
+        s.textContent = `
+          .menu { min-width: 220px !important; max-width: 320px !important; will-change: transform, opacity !important; }
+        `;
+        menu.shadowRoot.appendChild(s);
+      }
+    } catch {}
+    for (const it of menu.querySelectorAll('md-menu-item')) fixItemStyle(it);
+    for (const sub of menu.querySelectorAll('md-menu')) fixMenuStyle(sub);
+  }
+
+  let appMenuBuilt = false;
+  function buildAppMenu(force = false) {
+    const forced = force === true;
+    if (!appMenu || (!forced && appMenu.open)) return;
+    if (appMenuBuilt && !forced) {
+      window.__buildAppMenuHitCache = (window.__buildAppMenuHitCache || 0) + 1;
+      for (const item of appMenu.querySelectorAll('md-menu-item[value^="theme:"]')) {
+        const val = item.getAttribute('value') || '';
+        item.selected = (val === `theme:${current?.key}`);
+      }
+      fixMenuStyle(appMenu);
+      return;
+    }
+    window.__buildAppMenuFullBuild = (window.__buildAppMenuFullBuild || 0) + 1;
+    appMenus = readAppMenus();
+    if (!appMenus.length && !forced) return;
     const items = appMenus.map((m, i) => {
       const top = menuItem(m.title);
       top.append(glyph(MENU_GLYPHS[m.title] || 'info', 'start'), submenu(m.title, m.options.map((o, j) => menuItem(String(o.label), {
@@ -400,16 +524,37 @@ function agyThemeHost(bundle) {
       }))));
       return top;
     });
-    // Theme: the choices as one single-select group, "Next theme" as another
+    // Theme: standalone themes, MD3E submenu, and Next theme
     const choices = document.createElement('md-menu-group');
     for (const o of options.values()) {
+      if (o.theme === 'md3e') continue;
       const item = menuItem(o.name, { value: `theme:${o.key}`, 'selection-mode': 'single', selected: o.key === current?.key, 'selected-icon': 'check' });
-      const swatch = document.createElement('span');
-      swatch.className = 'swatch';
-      swatch.slot = 'end';
-      swatch.style.background = o.swatch || 'transparent';
-      item.appendChild(swatch);
+      if (o.swatch && o.swatch !== 'transparent') {
+        const swatch = document.createElement('span');
+        swatch.className = 'swatch';
+        swatch.slot = 'end';
+        swatch.style.background = o.swatch;
+        item.appendChild(swatch);
+      }
       choices.appendChild(item);
+    }
+    const md3eItems = [];
+    for (const o of options.values()) {
+      if (o.theme !== 'md3e') continue;
+      const item = menuItem(o.name, { value: `theme:${o.key}`, 'selection-mode': 'single', selected: o.key === current?.key, 'selected-icon': 'check' });
+      if (o.swatch) {
+        const swatch = document.createElement('span');
+        swatch.className = 'swatch';
+        swatch.slot = 'end';
+        swatch.style.background = o.swatch;
+        item.appendChild(swatch);
+      }
+      md3eItems.push(item);
+    }
+    if (md3eItems.length) {
+      const md3eMenu = menuItem('Material 3 Expressive');
+      md3eMenu.append(glyph('palette', 'start'), submenu('Material 3 Expressive', md3eItems));
+      choices.appendChild(md3eMenu);
     }
     const cycle = document.createElement('md-menu-group');
     cycle.appendChild(menuItem('Next theme', { value: 'theme:next', 'trailing-text': 'Ctrl+Shift+F12' }));
@@ -417,6 +562,8 @@ function agyThemeHost(bundle) {
     theme.append(glyph('palette', 'start'), submenu('Theme', [choices, cycle]));
     for (const el of [...appMenu.children]) if (el !== appTrigger) el.remove();
     appMenu.append(...items, theme);
+    appMenuBuilt = true;
+    fixMenuStyle(appMenu);
   }
 
   function onAppMenuSelect(e) {
@@ -642,6 +789,48 @@ function agyThemeHost(bundle) {
   window.addEventListener('focus', syncTitleBarOverlay);
   document.fonts?.addEventListener('loadingdone', position);
 
+  // ---- Virtual list layout guard --------------------------------------------
+  // Antigravity virtualizes the sidebar and auxiliary panels with TanStack
+  // Virtual. On mounting long lists (e.g. 299 diffs in Review or 95 sidebar
+  // items), TanStack Virtual synchronously reads offsetHeight on every
+  // [data-index] element while dirtying container styles between each item.
+  // In a large conversation, each forced reflow costs 80-100ms, causing a 2s+
+  // freeze upon entry. This guard serves known fixed heights or cached values
+  // for virtual rows, preventing layout thrashing while letting ResizeObserver
+  // handle real dynamic size changes asynchronously on idle frames.
+  const origOffsetHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')?.get;
+  const virtualHeightCache = new WeakMap();
+  if (origOffsetHeight) {
+    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+      get() {
+        if (this.hasAttribute('data-index')) {
+          const cached = virtualHeightCache.get(this);
+          if (cached !== undefined) return cached;
+          if (this.firstElementChild?.classList.contains('sticky')) {
+            virtualHeightCache.set(this, 33);
+            return 33;
+          }
+          if (this.classList.contains('bg-sidebar') || this.querySelector('h2')) {
+            virtualHeightCache.set(this, 24);
+            return 24;
+          }
+          if (this.querySelector('.agy-sidebar-row') || this.classList.contains('pb-[1px]')) {
+            virtualHeightCache.set(this, 33);
+            return 33;
+          }
+          if (!this.textContent.trim()) {
+            virtualHeightCache.set(this, 16);
+            return 16;
+          }
+        }
+        const val = origOffsetHeight.call(this);
+        if (this.hasAttribute('data-index')) virtualHeightCache.set(this, val);
+        return val;
+      },
+      configurable: true,
+    });
+  }
+
   // Start the Overview panel's Context card; every theme gets it
   const contextCard = typeof agyContextCard === 'function' ? agyContextCard() : null;
   // ...and the token line under each finished turn
@@ -668,6 +857,12 @@ function agyThemeHost(bundle) {
     loadingIndicator?.dispose();
     progressIndicators?.dispose();
     codeTools?.dispose();
+    if (origOffsetHeight) {
+      Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+        get: origOffsetHeight,
+        configurable: true,
+      });
+    }
     document.querySelectorAll('[data-agy-ghost]').forEach((g) => g.remove());
     document.getElementById('agy-theme-css')?.remove();
     document.documentElement?.removeAttribute('data-agy-theme');

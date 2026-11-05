@@ -1,0 +1,414 @@
+/* ==========================================================================
+   AGY "E-Ink / Paper" — Authentic Digital Paper & E-Reader Theme
+   Inspired by reMarkable 2, Kindle Scribe, and BOOX e-paper tablets.
+   Strict monochrome contrast, zero glowing blur, zero color distractions,
+   and clean typography tailored for deep focus and reading.
+   ========================================================================== */
+
+:root[data-agy-theme="paper"] {
+  /* Inverted E-Ink Dark Mode (Kindle Dark / Night Reading) */
+  --p-window:  #111111;
+  --p-panel:   #181818;
+  --p-raised:  #222222;
+  --p-high:    #2c2c2c;
+  --p-inset:   #0d0d0d;
+
+  --p-line:    #2f2f2f;
+  --p-line-2:  #444444;
+  --p-line-3:  #666666;
+  --p-hover:   #252525;
+  --p-select:  #333333;
+
+  --p-text-max: #ffffff;
+  --p-text:     #e2e2e2;
+  --p-text-2:   #9e9e9e;
+  --p-text-3:   #707070;
+
+  --p-primary:     #ffffff;
+  --p-primary-ink: #000000;
+  --p-accent:      #d4d4d4;
+
+  --p-font-ui:   -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --p-font-read: "Charter", "Georgia", "Cambria", serif;
+  --p-font-mono: "Consolas", "Courier New", monospace;
+}
+
+:root[data-agy-theme="paper"][data-agy-mode="light"] {
+  /* True E-Paper Light Mode (reMarkable / Fresh Book Page) */
+  --p-window:  #e7e7e7;
+  --p-panel:   #f6f6f6;
+  --p-raised:  #ffffff;
+  --p-high:    #ebebeb;
+  --p-inset:   #dedede;
+
+  --p-line:    #d4d4d4;
+  --p-line-2:  #bcbcbc;
+  --p-line-3:  #888888;
+  --p-hover:   #eeeeee;
+  --p-select:  #e0e0e0;
+
+  --p-text-max: #000000;
+  --p-text:     #1a1a1a;
+  --p-text-2:   #555555;
+  --p-text-3:   #777777;
+
+  --p-primary:     #000000;
+  --p-primary-ink: #ffffff;
+  --p-accent:      #222222;
+}
+
+/* 01 — App token bridge */
+:root[data-agy-theme="paper"] {
+  --background: var(--p-window) !important;
+  --content: var(--p-panel) !important;
+  --foreground: var(--p-text) !important;
+  --primary: var(--p-primary) !important;
+  --primary-foreground: var(--p-primary-ink) !important;
+  --secondary: var(--p-high) !important;
+  --secondary-foreground: var(--p-text-2) !important;
+  --muted: var(--p-raised) !important;
+  --muted-foreground: var(--p-text-3) !important;
+  --border: var(--p-line) !important;
+  --card: var(--p-raised) !important;
+  --card-border: var(--p-line-2) !important;
+  --sidebar: var(--p-window) !important;
+  --sidebar-secondary: var(--p-select) !important;
+  --sidebar-muted: var(--p-raised) !important;
+}
+
+/* 05 — Onyx layer override */
+:root[data-agy-theme="paper"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) {
+  --glass: var(--p-raised);
+  --glass-border: var(--p-line);
+  --glass-highlight: transparent;
+  --glass-shadow: none;
+  --shell: var(--p-window);
+  --onyx-frame: transparent;
+  --onyx-well: var(--p-inset);
+  --onyx-key: var(--p-high);
+  --onyx-raised: var(--p-raised);
+  --onyx-selected: var(--p-select);
+  --nux-focus-ring: var(--p-line-3);
+  --nux-chip-shadow: none;
+}
+
+/* 10 — Main Reading Panel & Book Layout */
+:root[data-agy-theme="paper"] .group\/pane,
+:root[data-agy-theme="paper"] .agy-sheet:not(:has(.group\/pane)) .browser-hole-opaque {
+  --background: var(--p-panel);
+  --color-background: var(--p-panel);
+  width: auto;
+  height: calc(100% - 10px);
+  margin: 0 10px 10px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--p-line-2);
+  background: var(--p-panel);
+  box-shadow: none;
+  overflow: hidden;
+}
+:root[data-agy-theme="paper"] .agy-sheet {
+  background-image: none !important;
+}
+:root[data-agy-theme="paper"] .bg-border.flex-shrink-0.z-30.h-full {
+  background: var(--p-window);
+}
+
+/* Inactive webview occlusion guard */
+div[style*="opacity: 0.005"] webview,
+div[style*="display: none"] webview,
+webview[style*="opacity: 0.005"] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* 20 — Sidebar: Clean E-Ink Document Index (Fixed header overflow) */
+:root[data-agy-theme="paper"] aside,
+:root[data-agy-theme="paper"] nav {
+  font-family: var(--p-font-ui);
+}
+
+/* Fix sidebar section headers: Pinned Conversations, Projects, Conversations */
+:root[data-agy-theme="paper"] aside h2,
+:root[data-agy-theme="paper"] aside h3,
+:root[data-agy-theme="paper"] nav h2,
+:root[data-agy-theme="paper"] nav h3,
+:root[data-agy-theme="paper"] aside [role="heading"],
+:root[data-agy-theme="paper"] nav [role="heading"] {
+  font-family: var(--p-font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--p-text-3) !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  line-height: normal !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 8px 0 4px !important;
+}
+
+/* 30 — Content Reading Typography (Scoped ONLY to chat prose) */
+:root[data-agy-theme="paper"] .prose,
+:root[data-agy-theme="paper"] .select-text {
+  font-family: var(--p-font-read);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--p-text);
+}
+
+:root[data-agy-theme="paper"] .prose h1,
+:root[data-agy-theme="paper"] .prose h2,
+:root[data-agy-theme="paper"] .prose h3 {
+  font-family: var(--p-font-read);
+  font-weight: 700;
+  color: var(--p-text-max);
+}
+
+:root[data-agy-theme="paper"] .prose h1 {
+  font-size: 1.35rem;
+  border-bottom: 1px solid var(--p-line-2);
+  padding-bottom: 4px;
+  margin-top: 20px;
+}
+:root[data-agy-theme="paper"] .prose h2 {
+  font-size: 1.15rem;
+  margin-top: 16px;
+}
+
+/* 40 — User Message Bubble: Stark Monochrome Index Card */
+:root[data-agy-theme="paper"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-user-bubble-frame {
+  padding: 0;
+  background: transparent;
+  border-radius: 4px;
+}
+:root[data-agy-theme="paper"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-user-bubble {
+  background: var(--p-raised);
+  color: var(--p-text-max);
+  border: 1px solid var(--p-line-2);
+  border-radius: 4px;
+  box-shadow: none;
+  font-family: var(--p-font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 8px 12px;
+}
+
+/* 50 — Composer: Crisp E-Writer Text Pad */
+:root[data-agy-theme="paper"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer {
+  padding: 1px;
+  background: var(--p-line-2);
+  border-radius: 6px;
+  box-shadow: none;
+  transition: background-color 0.1s ease;
+}
+:root[data-agy-theme="paper"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer:focus-within {
+  background: var(--p-text-max);
+}
+:root[data-agy-theme="paper"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer > .surface-composer-card {
+  background: var(--p-raised);
+  border-radius: 5px;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+:root[data-agy-theme="paper"] textarea,
+:root[data-agy-theme="paper"] [contenteditable] {
+  font-family: var(--p-font-ui) !important;
+  font-size: 14px !important;
+}
+
+/* 60 — Code Blocks: Pure Clean Monospace */
+:root[data-agy-theme="paper"] pre,
+:root[data-agy-theme="paper"] code,
+:root[data-agy-theme="paper"] .agy-code {
+  font-family: var(--p-font-mono) !important;
+  font-size: 13px !important;
+}
+:root[data-agy-theme="paper"] pre {
+  background: var(--p-inset) !important;
+  border: 1px solid var(--p-line) !important;
+  border-radius: 3px !important;
+  padding: 10px !important;
+}
+:root[data-agy-theme="paper"] code:not(pre code) {
+  background: var(--p-high) !important;
+  color: var(--p-text-max) !important;
+  border: 1px solid var(--p-line) !important;
+  border-radius: 2px !important;
+  padding: 1px 4px !important;
+}
+
+/* 70 — Menus & Overlays: Clean Monochrome Card */
+:root[data-agy-theme="paper"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-overlay[role="menu"] {
+  background: var(--p-raised);
+  border-radius: 6px;
+  border: 1px solid var(--p-line-2);
+  box-shadow: 0 4px 16px -4px rgb(0 0 0 / 0.5);
+  backdrop-filter: none;
+  padding: 4px;
+}
+:root[data-agy-theme="paper"] [role="menuitem"],
+:root[data-agy-theme="paper"] [role="menuitemradio"] {
+  border-radius: 4px;
+  font-family: var(--p-font-ui);
+  font-size: 13px;
+}
+:root[data-agy-theme="paper"] [role="menuitem"]:hover,
+:root[data-agy-theme="paper"] [role="menuitemradio"]:hover {
+  background: var(--p-select);
+}
+
+/* High-contrast hairline scrollbar */
+:root[data-agy-theme="paper"] ::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+:root[data-agy-theme="paper"] ::-webkit-scrollbar-thumb {
+  background: var(--p-line-2);
+  border-radius: 0;
+}
+:root[data-agy-theme="paper"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--p-line-3);
+}
+
+/* 80 — Voice Mode & Gemini Live: E-Ink Paper Aesthetic */
+:root[data-agy-theme="paper"] [data-testid="voice-live-pill"] {
+  background: var(--p-raised) !important;
+  color: var(--p-text-max) !important;
+  border: 1px solid var(--p-line-2) !important;
+  border-radius: 4px !important;
+  transition: background-color 0.1s ease, color 0.1s ease !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-live-pill"]:hover {
+  background: var(--p-high) !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-start-button"] {
+  color: inherit !important;
+}
+
+/* Voice Picker Dialog — Editorial E-Ink Card */
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] {
+  background: var(--p-raised) !important;
+  border: 1px solid var(--p-line-2) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 16px -4px rgb(0 0 0 / 0.5) !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] [data-testid="voice-picker-close"] {
+  color: var(--p-text-2) !important;
+  border-radius: 2px !important;
+  border: 1px solid transparent !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] [data-testid="voice-picker-close"]:hover {
+  background: var(--p-hover) !important;
+  color: var(--p-text-max) !important;
+  border-color: var(--p-line) !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] [data-testid="voice-picker-name"] {
+  color: var(--p-text-max) !important;
+  font-family: var(--p-font-read) !important;
+  font-weight: 700 !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] canvas {
+  filter: grayscale(1) contrast(1.4) !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] .voice-picker-dot > span {
+  background: var(--p-line-2) !important;
+  border-radius: 2px !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] .voice-picker-dot[aria-current="true"] > span {
+  background: var(--p-text-max) !important;
+  box-shadow: none !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] button[data-testid="voice-picker-use"] {
+  background: var(--p-primary) !important;
+  color: var(--p-primary-ink) !important;
+  border: 1px solid var(--p-line-3) !important;
+  border-radius: 3px !important;
+  font-family: var(--p-font-ui) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-picker"] button[data-testid="voice-picker-use"]:hover {
+  opacity: 0.9 !important;
+}
+
+/* Active Voice Docked Panel — Strictly No Blur, Sharp Edges */
+:root[data-agy-theme="paper"] [data-testid="live-docked"] {
+  background: var(--p-raised) !important;
+  background-image: none !important;
+  border: 1px solid var(--p-line-2) !important;
+  border-bottom: none !important;
+  border-radius: 4px 4px 0 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-end-button"],
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-call-end"] {
+  background: var(--p-raised) !important;
+  color: var(--p-text-max) !important;
+  border: 1px solid var(--p-line-3) !important;
+  border-radius: 3px !important;
+  font-weight: 600 !important;
+}
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-end-button"]:hover,
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-call-end"]:hover {
+  background: var(--p-select) !important;
+}
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-mute-button"],
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-call-agent-mute"],
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-call-speed"],
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-call-collapse"] {
+  border-radius: 2px !important;
+  border: 1px solid transparent !important;
+}
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-mute-button"]:hover,
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-call-agent-mute"]:hover,
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-call-speed"]:hover,
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-call-collapse"]:hover {
+  background: var(--p-hover) !important;
+  border-color: var(--p-line) !important;
+}
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-speed-fill"] {
+  background: var(--p-text-max) !important;
+}
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="voice-speed-track"] {
+  background: var(--p-line-2) !important;
+}
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="live-lead"],
+:root[data-agy-theme="paper"] [data-testid="live-docked"] [data-testid="live-body"] {
+  color: var(--p-text) !important;
+  font-family: var(--p-font-read) !important;
+}
+
+/* Background Glow Canvas: ZERO GLOW in authentic E-Paper */
+:root[data-agy-theme="paper"] [data-testid="voice-speaking-glow"] {
+  display: none !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-speaking-glow"] canvas {
+  display: none !important;
+}
+
+/* In-Chat Separator Marker */
+:root[data-agy-theme="paper"] [data-testid="voice-chat-marker"] {
+  color: var(--p-text) !important;
+  font-family: var(--p-font-read) !important;
+  font-weight: 500 !important;
+}
+:root[data-agy-theme="paper"] div:has(> span [data-testid="voice-chat-marker"]) .bg-secondary,
+:root[data-agy-theme="paper"] div:has(> [data-testid="voice-chat-marker"]) .bg-secondary,
+:root[data-agy-theme="paper"] [data-testid="voice-chat-marker"] ~ div.bg-secondary {
+  background-color: var(--p-line-2) !important;
+}
+
+/* In-Chat Voice Transcript Card */
+:root[data-agy-theme="paper"] [data-testid="voice-transcript-card"] {
+  background: var(--p-raised) !important;
+  border: 1px solid var(--p-line-2) !important;
+  border-radius: 4px !important;
+}
+:root[data-agy-theme="paper"] [data-testid="voice-transcript-card"]:hover {
+  background: var(--p-select) !important;
+  border-color: var(--p-line-3) !important;
+}
+

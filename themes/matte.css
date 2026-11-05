@@ -1,14 +1,14 @@
 /* ==========================================================================
-   "Matte": a theme for Antigravity Desktop (tested with 2.28)
+   AGY "Matte" (v4.4) — theme for Antigravity Desktop 2.26–2.28
 
    Idea: matte, quiet, fast. A near-black window holds one rounded panel;
    surfaces step up in small neutral increments, 1px hairlines carry the
    structure, and the only bright thing is the send button. No gradients,
-   blur, grain, glow, masks or looping animation. Light mode is the same
-   structure inverted, from the token block after 00.
+   blur, grain, glow, masks or looping animation. Light mode (v4.4) is the
+   same structure inverted, from the token block after 00.
 
-   Built for speed (a full style recalc costs about what the stock app's
-   does):
+   Built for speed (live v3.5 measured a 122ms full style recalc vs about
+   half that for stock, plus a moving backdrop under blurred glass):
    - Almost everything is done through the app's own tokens; the app's
      Tailwind classes then paint the components. Few rules = cheap recalc.
    - The handful of rules end in an id, class or single attribute: no
@@ -23,7 +23,8 @@
    writes its tokens and the VS Code theme inline on <html>, so sections 01
    and 02 use !important. Never wrap this file in @layer.
 
-   Scope: :root[data-agy-theme="matte"]; loaded by src/theme-host.js.
+   Scope: :root[data-agy-theme="matte"]; loaded by theme-host.js.
+   Earlier versions: agy-theme.v1/.v2/.v3.css.
    ========================================================================== */
 
 
@@ -285,24 +286,36 @@
    --color-background) here makes every bg-background / var(--background)
    layer inside the panel match it: the pinned user-message band, the fade
    above the composer, sticky headers. */
-:root[data-agy-theme="matte"] .group\/pane {
+:root[data-agy-theme="matte"] .group\/pane,
+:root[data-agy-theme="matte"] .agy-sheet:not(:has(.group\/pane)) .browser-hole-opaque {
   --background: var(--m-panel);
   --color-background: var(--m-panel);
   width: auto;
   height: calc(100% - 8px);
-  /* No outline: flush against the sidebar a 1px ring reads as a divider.
-     Tone alone (#151517 on #0e0e10) marks the panel; a 6px gap lets its
-     corners read as a card. */
+  /* No outline: flush against the sidebar its 1px ring read as the very
+     divider the user asked to remove (live v4.0). Tone alone (#151517 on
+     #0e0e10) marks the panel; a 6px gap lets its corners read as a card. */
   margin: 0 8px 8px 6px;
   border-radius: 14px;
   background: var(--m-panel);
   overflow: hidden;
 }
+:root[data-agy-theme="matte"] .agy-sheet {
+  background-image: none !important;
+}
 
 /* Full-height 1px divider between sidebar and panel (holds the resize sash,
    so it keeps its box; only the line goes). Tailwind class hook. */
 :root[data-agy-theme="matte"] .bg-border.flex-shrink-0.z-30.h-full {
-  background: transparent;
+  background: var(--m-window);
+}
+
+/* Inactive webview occlusion guard: prevent GPU compositor bleeding */
+div[style*="opacity: 0.005"] webview,
+div[style*="display: none"] webview,
+webview[style*="opacity: 0.005"] {
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 /* The right-hand pane (terminal, task output, files): its tab strip stays
@@ -365,7 +378,7 @@
 /* The shell's 1px ring is its padded background (p-px bg-card-border).
    Focus only brightens that ring: no movement, no glow. The app's own
    click-anywhere-to-focus is opted out for the transcript in
-   src/theme-host.js. */
+   page-scripts.mjs. */
 :root[data-agy-theme="matte"] [id="antigravity.agentSidePanelInputBox"] {
   box-shadow: 0 10px 28px -14px var(--m-shadow);
 }
@@ -388,3 +401,188 @@
   color: var(--m-text-max);
   box-shadow: 0 8px 20px -8px var(--m-shadow);
 }
+
+
+/* 05 — Antigravity's own glass layer (data-newux-theme, since the November
+   update). Its rules outrank ours, so its tokens are mapped to Matte here and the
+   surfaces it paints with literal values are restated. */
+:root[data-agy-theme="matte"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) {
+  --glass: var(--m-raised);
+  --glass-border: var(--m-line);
+  --glass-highlight: transparent;
+  --glass-shadow: none;
+  --shell: var(--m-window);
+  --onyx-frame: transparent;
+  --onyx-well: var(--m-inset);
+  --onyx-key: var(--m-high);
+  --onyx-raised: var(--m-raised);
+  --onyx-selected: var(--m-select);
+  --nux-focus-ring: var(--m-line-3);
+  --nux-chip-shadow: none;
+}
+
+/* P1 — Bubble & composer */
+:root[data-agy-theme="matte"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-user-bubble-frame {
+  padding: 1px;
+  background: var(--card-border);
+  border-radius: 12px;
+}
+:root[data-agy-theme="matte"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-user-bubble {
+  background: var(--card);
+  color: var(--m-text);
+  box-shadow: none;
+  border-radius: 11px;
+}
+:root[data-agy-theme="matte"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer {
+  padding: 1px;
+  background: var(--card-border);
+  box-shadow: 0 10px 28px -14px var(--m-shadow);
+}
+:root[data-agy-theme="matte"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer:focus-within {
+  background: var(--m-line-3);
+}
+:root[data-agy-theme="matte"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer > .surface-composer-card {
+  background: var(--card);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* P2 — Menus & Overlays */
+:root[data-agy-theme="matte"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-overlay[role="menu"] {
+  background: var(--m-raised);
+  border-radius: 12px;
+  border: 1px solid var(--m-line-2);
+  box-shadow: 0 16px 40px -12px var(--m-shadow-menu);
+  backdrop-filter: none;
+}
+
+/* 80 — Voice Mode & Gemini Live Harmonization */
+:root[data-agy-theme="matte"] [data-testid="voice-live-pill"] {
+  background: var(--m-raised) !important;
+  color: var(--m-text) !important;
+  border: 1px solid var(--m-line-2) !important;
+  border-radius: 9999px !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-live-pill"]:hover {
+  background: var(--m-high) !important;
+  color: var(--m-text-max) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-start-button"] {
+  color: inherit !important;
+}
+
+/* Voice Picker Dialog */
+:root[data-agy-theme="matte"] [data-testid="voice-picker"] {
+  background: var(--m-panel) !important;
+  border: 1px solid var(--m-line-2) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 40px -12px var(--m-shadow-menu) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-picker"] [data-testid="voice-picker-close"] {
+  color: var(--m-text-2) !important;
+  border-radius: 6px !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-picker"] [data-testid="voice-picker-close"]:hover {
+  background: var(--m-hover) !important;
+  color: var(--m-text-max) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-picker"] [data-testid="voice-picker-name"] {
+  color: var(--m-text-max) !important;
+  font-family: var(--m-font-ui) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-picker"] .voice-picker-dot > span {
+  background: var(--m-line-3) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-picker"] .voice-picker-dot[aria-current="true"] > span {
+  background: var(--m-primary) !important;
+  box-shadow: 0 0 6px rgb(255 255 255 / 0.3) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-picker"] button[data-testid="voice-picker-use"] {
+  background: var(--m-primary) !important;
+  color: var(--m-primary-ink) !important;
+  border-radius: 10px !important;
+  font-family: var(--m-font-ui) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-picker"] button[data-testid="voice-picker-use"]:hover {
+  background: var(--m-strong) !important;
+}
+
+/* Active Voice Docked Panel */
+:root[data-agy-theme="matte"] [data-testid="live-docked"] {
+  background: var(--m-panel) !important;
+  background-image: none !important;
+  border: 1px solid var(--m-line-2) !important;
+  border-bottom: none !important;
+  border-radius: 14px 14px 0 0 !important;
+  box-shadow: 0 -8px 24px -8px var(--m-shadow) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-end-button"],
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-call-end"] {
+  background: var(--m-error) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-mute-button"],
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-call-agent-mute"],
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-call-speed"],
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-call-collapse"] {
+  border-radius: 6px !important;
+}
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-mute-button"]:hover,
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-call-agent-mute"]:hover,
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-call-speed"]:hover,
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-call-collapse"]:hover {
+  background: var(--m-hover) !important;
+  color: var(--m-text-max) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-speed-fill"] {
+  background: var(--m-text-2) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="voice-speed-track"] {
+  background: var(--m-line-2) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="live-lead"],
+:root[data-agy-theme="matte"] [data-testid="live-docked"] [data-testid="live-body"] {
+  color: var(--m-text) !important;
+  font-family: var(--m-font-ui) !important;
+}
+
+/* Background Glow Canvas & Ring — Subdued and quiet, zero neon glare */
+:root[data-agy-theme="matte"] [data-testid="voice-speaking-glow"] canvas {
+  opacity: 0.15 !important;
+  filter: grayscale(0.8) !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-speaking-glow"] .voice-glow-ring {
+  box-shadow: 0 0 0 1px var(--m-line-2) !important;
+}
+
+/* In-Chat Separator Marker */
+:root[data-agy-theme="matte"] [data-testid="voice-chat-marker"] {
+  color: var(--m-text-2) !important;
+  font-family: var(--m-font-ui) !important;
+}
+:root[data-agy-theme="matte"] div:has(> span [data-testid="voice-chat-marker"]) .bg-secondary,
+:root[data-agy-theme="matte"] div:has(> [data-testid="voice-chat-marker"]) .bg-secondary,
+:root[data-agy-theme="matte"] [data-testid="voice-chat-marker"] ~ div.bg-secondary {
+  background-color: var(--m-line) !important;
+}
+
+/* In-Chat Voice Transcript Card */
+:root[data-agy-theme="matte"] [data-testid="voice-transcript-card"] {
+  background: var(--m-raised) !important;
+  border: 1px solid var(--m-line-2) !important;
+  border-radius: 12px !important;
+}
+:root[data-agy-theme="matte"] [data-testid="voice-transcript-card"]:hover {
+  background: var(--m-high) !important;
+  border-color: var(--m-line-3) !important;
+}
+
+

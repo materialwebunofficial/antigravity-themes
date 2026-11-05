@@ -1,0 +1,370 @@
+/* ==========================================================================
+   AGY "Nordic Frost" — Official Nord Palette (Arctic Ice Studio)
+   An authentic Scandinavian color scheme: calm, matte, elegant.
+   Zero neon glows, zero AI-slop gradients, zero aggressive blurs.
+   Pure Arctic Ice Studio design language: Polar Night, Snow Storm, and Frost.
+   ========================================================================== */
+
+:root[data-agy-theme="nordic"] {
+  /* Polar Night (Dark palette) */
+  --nord0: #2e3440; /* Base background */
+  --nord1: #3b4252; /* Elevated panels */
+  --nord2: #434c5e; /* Cards & active rows */
+  --nord3: #4c566a; /* Borders & muted lines */
+
+  /* Snow Storm (Text & highlights) */
+  --nord4: #d8dee9; /* Body text */
+  --nord5: #e5e9f0; /* Elevated text */
+  --nord6: #eceff4; /* High-contrast headings */
+
+  /* Frost (Calm arctic accents - strictly matte, no neon) */
+  --nord7:  #8fbcbb; /* Sage frost */
+  --nord8:  #88c0d0; /* Glacial blue */
+  --nord9:  #81a1c1; /* Steel blue */
+  --nord10: #5e81ac; /* Deep arctic blue */
+
+  /* Aurora (Subtle indicators) */
+  --nord11: #bf616a; /* Muted red */
+  --nord14: #a3be8c; /* Muted green */
+
+  --n-font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --n-mono: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+}
+
+:root[data-agy-theme="nordic"][data-agy-mode="light"] {
+  /* Snow Storm (Light palette) */
+  --nord0: #eceff4; /* Base background */
+  --nord1: #e5e9f0; /* Panels */
+  --nord2: #ffffff; /* Cards */
+  --nord3: #d8dee9; /* Borders */
+
+  --nord4: #434c5e; /* Body text */
+  --nord5: #3b4252; /* Text */
+  --nord6: #2e3440; /* Headings */
+
+  --nord7:  #5e81ac;
+  --nord8:  #5e81ac;
+  --nord9:  #4c566a;
+  --nord10: #434c5e;
+}
+
+/* 01 — App token bridge */
+:root[data-agy-theme="nordic"] {
+  --background: var(--nord0) !important;
+  --content: var(--nord1) !important;
+  --foreground: var(--nord4) !important;
+  --primary: var(--nord8) !important;
+  --primary-foreground: #2e3440 !important;
+  --secondary: var(--nord2) !important;
+  --secondary-foreground: var(--nord5) !important;
+  --muted: var(--nord2) !important;
+  --muted-foreground: var(--nord3) !important;
+  --border: var(--nord3) !important;
+  --card: var(--nord2) !important;
+  --card-border: var(--nord3) !important;
+  --sidebar: var(--nord0) !important;
+  --sidebar-secondary: var(--nord2) !important;
+  --sidebar-muted: var(--nord2) !important;
+}
+
+/* 05 — Onyx layer override */
+:root[data-agy-theme="nordic"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) {
+  --glass: var(--nord2);
+  --glass-border: var(--nord3);
+  --glass-highlight: transparent;
+  --glass-shadow: none;
+  --shell: var(--nord0);
+  --onyx-frame: transparent;
+  --onyx-well: var(--nord0);
+  --onyx-key: var(--nord2);
+  --onyx-raised: var(--nord1);
+  --onyx-selected: var(--nord2);
+  --nux-focus-ring: var(--nord8);
+  --nux-chip-shadow: none;
+}
+
+/* 10 — Main Inset Panel */
+:root[data-agy-theme="nordic"] .group\/pane,
+:root[data-agy-theme="nordic"] .agy-sheet:not(:has(.group\/pane)) .browser-hole-opaque {
+  --background: var(--nord1);
+  --color-background: var(--nord1);
+  width: auto;
+  height: calc(100% - 10px);
+  margin: 0 10px 10px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--nord3);
+  background: var(--nord1);
+  box-shadow: 0 4px 16px -4px rgb(0 0 0 / 0.3);
+  overflow: hidden;
+}
+:root[data-agy-theme="nordic"] .agy-sheet {
+  background-image: none !important;
+}
+:root[data-agy-theme="nordic"] .bg-border.flex-shrink-0.z-30.h-full {
+  background: var(--nord0);
+}
+
+/* Inactive webview occlusion guard */
+div[style*="opacity: 0.005"] webview,
+div[style*="display: none"] webview,
+webview[style*="opacity: 0.005"] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* 20 — Typography: Calm, Balanced Scandinavian Grotesque */
+:root[data-agy-theme="nordic"] {
+  font-family: var(--n-font);
+}
+
+:root[data-agy-theme="nordic"] .prose,
+:root[data-agy-theme="nordic"] .select-text {
+  font-family: var(--n-font);
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--nord4);
+}
+
+:root[data-agy-theme="nordic"] h1,
+:root[data-agy-theme="nordic"] h2,
+:root[data-agy-theme="nordic"] h3,
+:root[data-agy-theme="nordic"] h4 {
+  font-family: var(--n-font);
+  font-weight: 600;
+  color: var(--nord6);
+  letter-spacing: -0.01em;
+}
+
+:root[data-agy-theme="nordic"] h1 {
+  font-size: 1.35rem;
+  border-bottom: 1px solid var(--nord3);
+  padding-bottom: 6px;
+  margin-top: 20px;
+}
+
+/* 30 — User Message Bubble: Clean Polar Card */
+:root[data-agy-theme="nordic"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-user-bubble-frame {
+  padding: 1px;
+  background: var(--nord3);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.2);
+}
+:root[data-agy-theme="nordic"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-user-bubble {
+  background: var(--nord2);
+  color: var(--nord6);
+  border-radius: 7px;
+  padding: 10px 14px;
+  font-family: var(--n-font);
+  font-size: 14px;
+  line-height: 1.55;
+  box-shadow: none;
+}
+
+/* 40 — Composer: Crisp Nordic Input Card */
+:root[data-agy-theme="nordic"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer {
+  padding: 1px;
+  background: var(--nord3);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px -6px rgb(0 0 0 / 0.35);
+  transition: background-color 0.15s ease;
+}
+:root[data-agy-theme="nordic"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer:focus-within {
+  background: var(--nord8);
+}
+:root[data-agy-theme="nordic"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .surface-composer > .surface-composer-card {
+  background: var(--nord2);
+  border-radius: 9px;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+:root[data-agy-theme="nordic"] textarea,
+:root[data-agy-theme="nordic"] [contenteditable] {
+  font-family: var(--n-font) !important;
+  font-size: 14px !important;
+  color: var(--nord5) !important;
+}
+
+/* 50 — Code Blocks: Authentic Nord Syntax Styling */
+:root[data-agy-theme="nordic"] pre,
+:root[data-agy-theme="nordic"] code,
+:root[data-agy-theme="nordic"] .agy-code {
+  font-family: var(--n-mono) !important;
+  font-size: 13px !important;
+}
+:root[data-agy-theme="nordic"] pre {
+  background: var(--nord0) !important;
+  border: 1px solid var(--nord3) !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  box-shadow: none !important;
+}
+:root[data-agy-theme="nordic"] code:not(pre code) {
+  background: var(--nord2) !important;
+  color: var(--nord8) !important;
+  border: 1px solid var(--nord3) !important;
+  border-radius: 4px !important;
+  padding: 1px 5px !important;
+}
+
+/* 60 — Overlays & Menus */
+:root[data-agy-theme="nordic"] body[data-agy-theme][data-newux-theme]:is(.dark, :not(.dark)) .agy-overlay[role="menu"] {
+  background: var(--nord1);
+  border-radius: 8px;
+  border: 1px solid var(--nord3);
+  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.5);
+  backdrop-filter: none;
+  padding: 4px;
+}
+:root[data-agy-theme="nordic"] [role="menuitem"],
+:root[data-agy-theme="nordic"] [role="menuitemradio"] {
+  border-radius: 6px;
+  font-family: var(--n-font);
+  font-size: 13px;
+  color: var(--nord4);
+}
+:root[data-agy-theme="nordic"] [role="menuitem"]:hover,
+:root[data-agy-theme="nordic"] [role="menuitemradio"]:hover {
+  background: var(--nord2);
+  color: var(--nord6);
+}
+
+/* Scrollbar */
+:root[data-agy-theme="nordic"] ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+:root[data-agy-theme="nordic"] ::-webkit-scrollbar-thumb {
+  background: var(--nord3);
+  border-radius: 4px;
+}
+:root[data-agy-theme="nordic"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--nord8);
+}
+
+/* 80 — Voice Mode & Gemini Live Harmonization */
+:root[data-agy-theme="nordic"] [data-testid="voice-live-pill"] {
+  background: var(--nord2) !important;
+  color: var(--nord8) !important;
+  border: 1px solid var(--nord3) !important;
+  border-radius: 9999px !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-live-pill"]:hover {
+  background: var(--nord1) !important;
+  color: var(--nord6) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-start-button"] {
+  color: inherit !important;
+}
+
+/* Voice Picker Dialog */
+:root[data-agy-theme="nordic"] [data-testid="voice-picker"] {
+  background: var(--nord1) !important;
+  border: 1px solid var(--nord3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.5) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-picker"] [data-testid="voice-picker-close"] {
+  color: var(--nord4) !important;
+  border-radius: 6px !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-picker"] [data-testid="voice-picker-close"]:hover {
+  background: var(--nord2) !important;
+  color: var(--nord6) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-picker"] [data-testid="voice-picker-name"] {
+  color: var(--nord6) !important;
+  font-family: var(--n-font) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-picker"] .voice-picker-dot > span {
+  background: var(--nord3) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-picker"] .voice-picker-dot[aria-current="true"] > span {
+  background: var(--nord8) !important;
+  box-shadow: 0 0 8px rgba(136, 192, 208, 0.5) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-picker"] button[data-testid="voice-picker-use"] {
+  background: var(--nord8) !important;
+  color: var(--nord0) !important;
+  border-radius: 8px !important;
+  font-family: var(--n-font) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-picker"] button[data-testid="voice-picker-use"]:hover {
+  background: var(--nord9) !important;
+}
+
+/* Active Voice Docked Panel */
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] {
+  background: var(--nord1) !important;
+  background-image: none !important;
+  border: 1px solid var(--nord3) !important;
+  border-bottom: none !important;
+  border-radius: 12px 12px 0 0 !important;
+  box-shadow: 0 -8px 24px -8px rgb(0 0 0 / 0.4) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-end-button"],
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-call-end"] {
+  background: var(--nord11) !important;
+  color: var(--nord6) !important;
+  border-radius: 8px !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-mute-button"],
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-call-agent-mute"],
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-call-speed"],
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-call-collapse"] {
+  border-radius: 6px !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-mute-button"]:hover,
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-call-agent-mute"]:hover,
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-call-speed"]:hover,
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-call-collapse"]:hover {
+  background: var(--nord2) !important;
+  color: var(--nord6) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-speed-fill"] {
+  background: var(--nord8) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="voice-speed-track"] {
+  background: var(--nord3) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="live-lead"],
+:root[data-agy-theme="nordic"] [data-testid="live-docked"] [data-testid="live-body"] {
+  color: var(--nord5) !important;
+  font-family: var(--n-font) !important;
+}
+
+/* Background Glow Canvas & Ring */
+:root[data-agy-theme="nordic"] [data-testid="voice-speaking-glow"] canvas {
+  filter: hue-rotate(185deg) opacity(0.35) !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-speaking-glow"] .voice-glow-ring {
+  box-shadow: 0 0 0 1px rgba(136, 192, 208, 0.25) !important;
+}
+
+/* In-Chat Separator Marker */
+:root[data-agy-theme="nordic"] [data-testid="voice-chat-marker"] {
+  color: var(--nord8) !important;
+  font-family: var(--n-font) !important;
+}
+:root[data-agy-theme="nordic"] div:has(> span [data-testid="voice-chat-marker"]) .bg-secondary,
+:root[data-agy-theme="nordic"] div:has(> [data-testid="voice-chat-marker"]) .bg-secondary,
+:root[data-agy-theme="nordic"] [data-testid="voice-chat-marker"] ~ div.bg-secondary {
+  background-color: var(--nord3) !important;
+}
+
+/* In-Chat Voice Transcript Card */
+:root[data-agy-theme="nordic"] [data-testid="voice-transcript-card"] {
+  background: var(--nord1) !important;
+  border: 1px solid var(--nord3) !important;
+  border-radius: 8px !important;
+}
+:root[data-agy-theme="nordic"] [data-testid="voice-transcript-card"]:hover {
+  background: var(--nord2) !important;
+  border-color: var(--nord8) !important;
+}
+

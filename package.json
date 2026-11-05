@@ -1,7 +1,7 @@
 {
   "name": "@materialwebunofficial/antigravity-themes",
-  "version": "1.0.0",
-  "description": "Matte and Material 3 Expressive themes for Antigravity Desktop, applied without changing the app's files.",
+  "version": "1.0.4",
+  "description": "Matte, Paper, Nordic, and Material 3 Expressive themes for Antigravity Desktop, applied without changing the app's files.",
   "homepage": "https://github.com/materialwebunofficial/antigravity-themes#readme",
   "repository": {
     "type": "git",

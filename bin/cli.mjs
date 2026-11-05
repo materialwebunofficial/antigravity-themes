@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 // antigravity-themes: installs, runs and removes the themes. See README.md.
-import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { closeSync, cpSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, statSync, watch as watchFiles, writeFileSync } from 'node:fs';
+import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, watch as watchFiles, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { ROOT, pageScript, REMOVE_SCRIPT, PROBE_SCRIPT, selectScript } from '../lib/bundle.mjs';
-import { readPort, listTargets, evaluateEverywhere, watch } from '../lib/injector.mjs';
-import { installDir, stateFile, logFile, portFile } from '../lib/paths.mjs';
-import { writeAutostart, removeAutostart, hasAutostart, autostartFile } from '../lib/autostart.mjs';
+import { readPort, evaluateEverywhere, watch } from '../lib/injector.mjs';
+import { installDir, stateFile, logFile, portFile, appResourcesDir } from '../lib/paths.mjs';
+import { launch, writeAutostart, removeAutostart, hasAutostart, autostartFile } from '../lib/autostart.mjs';
 
 const NAME = 'antigravity-themes';
 const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-const NPX = `npx ${pkg.name}`;
+// npx.cmd: PowerShell's default script policy on Windows blocks plain npx (npx.ps1)
+const NPX = `${process.platform === 'win32' ? 'npx.cmd' : 'npx'} -y ${pkg.name}`;
 const [command = 'help', ...args] = process.argv.slice(2);
 const has = (flag) => args.includes(flag);
 const say = (line = '') => console.log(line);
@@ -21,7 +21,7 @@ function fail(message) {
   process.exit(1);
 }
 
-if (typeof WebSocket !== 'function') fail(`Node.js 22 or newer is needed (this is ${process.version}).`);
+if (typeof WebSocket !== 'function') fail(`Node.js 22 or newer is needed (this is ${process.version}). Get it from https://nodejs.org`);
 
 // ---- Background process ------------------------------------------------------
 // It answers on 127.0.0.1 with a random token, written to run.json: other
@@ -53,11 +53,7 @@ async function stopBackground() {
 
 async function startBackground(cli) {
   mkdirSync(installDir(), { recursive: true });
-  // keep the log short: it is only for troubleshooting
-  try { if (statSync(logFile()).size > 512 * 1024) rmSync(logFile()); } catch { /* none yet */ }
-  const log = openSync(logFile(), 'a');
-  spawn(process.execPath, [cli, 'run'], { detached: true, stdio: ['ignore', log, log], windowsHide: true }).unref();
-  closeSync(log);
+  launch(process.execPath, cli);
   for (let i = 0; i < 100; i++) {
     const state = await running();
     if (state) return state;
@@ -93,7 +89,17 @@ async function run() {
   setInterval(() => {
     if (readState()?.token !== token) process.exit(0);
   }, 2000);
-  const log = (line) => say(`${new Date().toISOString()} ${line}`);
+  // keep the log short: it is only for troubleshooting
+  try { if (statSync(logFile()).size > 512 * 1024) rmSync(logFile()); } catch { /* none yet */ }
+  const log = (line) => {
+    const entry = `${new Date().toISOString()} ${line}`;
+    say(entry);
+    try { appendFileSync(logFile(), `${entry}\n`); } catch { /* uninstalling */ }
+  };
+  process.on('uncaughtException', (err) => {
+    log(err.stack);
+    process.exit(1);
+  });
   log(`${NAME} ${pkg.version} running from ${ROOT}`);
   const watcher = watch({ getSource: () => pageScript(ROOT), log });
   if (has('--dev')) {
@@ -111,7 +117,55 @@ async function run() {
 // ---- Commands -----------------------------------------------------------------
 const RUNTIME = ['bin', 'lib', 'src', 'themes', 'vendor', 'package.json', 'README.md', 'LICENSE', 'NOTICE'];
 
+const isThemed = (result) => Boolean(result.value && JSON.parse(result.value));
+
+// Waits for the background process to reach the open windows, so that install
+// can report the result itself. Throws when Antigravity is not open.
+async function themedWindows() {
+  let results = [];
+  for (let i = 0; i < 40; i++) {
+    results = await evaluateEverywhere(PROBE_SCRIPT);
+    if (results.length && results.every(isThemed)) break;
+    await sleep(200);
+  }
+  return { themed: results.filter(isThemed).length, total: results.length };
+}
+
+async function installNative() {
+  const { execSync } = await import('node:child_process');
+  const resDir = appResourcesDir();
+  const asarPath = path.join(resDir, 'app.asar');
+  const appDir = path.join(resDir, 'app');
+  if (!existsSync(asarPath) && !existsSync(appDir)) {
+    fail(`Could not find Antigravity resources at ${resDir}. Is Antigravity installed?`);
+  }
+  await stopBackground();
+  removeAutostart();
+
+  if (!existsSync(appDir)) {
+    say('Extracting Antigravity app.asar into resources/app...');
+    execSync(`npx -y @electron/asar extract "${asarPath}" "${appDir}"`, { stdio: 'inherit' });
+  }
+
+  const bundleCode = pageScript(ROOT);
+  const bundleDest = path.join(appDir, 'dist', 'theme-bundle.js');
+  writeFileSync(bundleDest, bundleCode, 'utf8');
+
+  const preloadPath = path.join(appDir, 'dist', 'preload.js');
+  let preloadContent = readFileSync(preloadPath, 'utf8');
+  const marker = '// Antigravity Native Theme Injection (Zero background processes)';
+  if (!preloadContent.includes(marker)) {
+    const patch = `\n\n${marker}\n(function() {\n  try {\n    const electron = require('electron');\n    const path = require('path');\n    const fs = require('fs');\n    const b = path.join(__dirname, 'theme-bundle.js');\n    if (fs.existsSync(b)) {\n      const c = fs.readFileSync(b, 'utf8');\n      if (electron.webFrame) electron.webFrame.executeJavaScript(c);\n    }\n  } catch (e) {}\n})();\n`;
+    appendFileSync(preloadPath, patch, 'utf8');
+  }
+
+  say(`Installed natively into Antigravity (${resDir}).`);
+  say('No background process, no host server, and no startup entry.');
+  say('Done. The themes load permanently whenever Antigravity starts.');
+}
+
 async function install() {
+  if (has('--native')) return installNative();
   const dir = installDir();
   const same = path.resolve(dir) === path.resolve(ROOT);
   const wasRunning = await stopBackground();
@@ -126,24 +180,29 @@ async function install() {
   }
   const cli = path.join(dir, 'bin', 'cli.mjs');
   say(`Installed ${NAME} ${pkg.version} in ${dir}`);
-  if (has('--no-autostart')) {
+  const permanent = !has('--no-autostart');
+  if (permanent) {
+    say(`Starts at logon: ${writeAutostart(process.execPath, cli)}`);
+  } else {
     removeAutostart();
     say('Not started at logon (--no-autostart).');
-  } else {
-    say(`Starts at logon: ${writeAutostart(process.execPath, cli)}`);
   }
   const state = await startBackground(cli);
-  say(state ? `${wasRunning ? 'Restarted' : 'Started'} in the background (process ${state.pid}).` : `Could not start the background process; see ${logFile()}`);
-  try {
-    const windows = await listTargets(readPort());
-    say(`Antigravity is running: ${windows.length} window(s) will get the theme within a few seconds.`);
-  } catch {
-    say('Antigravity is not running: the theme appears when it starts.');
-  }
+  if (!state) fail(`could not start the background process, see ${logFile()}. On Windows it needs Windows Script Host (wscript.exe), and so does the logon entry.`);
+  say(`${wasRunning ? 'Restarted' : 'Started'} in the background (process ${state.pid}).`);
+  let windows = null;
+  try { windows = await themedWindows(); } catch { /* not open */ }
+  if (!windows?.total) say('Antigravity is not open: the theme appears when it starts.');
+  else if (!windows.themed) fail(`Antigravity is open, but no window got the theme; see ${logFile()}`);
+  else say(`Theme applied to ${windows.themed} of ${windows.total} Antigravity window(s).`);
   say();
   say('Choose a theme in Antigravity: the "Theme" menu in the title bar (Matte), or the menu button at the');
   say('top left, then Theme (Material 3 Expressive). Ctrl+Shift+F12 cycles through the themes.');
   say(`Remove everything with: ${NPX} uninstall`);
+  say();
+  say(permanent
+    ? 'Done. This is permanent: the themes return at every logon and every Antigravity start. Nothing else to do.'
+    : `Done. Not permanent: after the next logon, run "${NPX} start".`);
 }
 
 async function uninstall() {
@@ -161,13 +220,18 @@ async function uninstall() {
     rmSync(dir, { recursive: true, force: true });
     say(`Deleted ${dir}`);
   }
+  const appDir = path.join(appResourcesDir(), 'app');
+  if (existsSync(appDir)) {
+    rmSync(appDir, { recursive: true, force: true });
+    say(`Removed native installation at ${appDir}. Restored stock app.asar.`);
+  }
   say('Done. Antigravity keeps your last theme choice in its own storage; it has no effect without this tool.');
 }
 
 async function on() {
   const results = await evaluateEverywhere(pageScript(ROOT));
   const ok = results.filter((r) => !r.error).length;
-  say(`Applied to ${ok} window(s).${await running() ? '' : ' Without the background process it lasts until a window reloads; run "start" to keep it.'}`);
+  say(`Applied to ${ok} window(s).${await running() ? '' : ' Without the background process it lasts until a window reloads; "install" makes it permanent.'}`);
 }
 
 async function off() {
@@ -200,9 +264,8 @@ async function status() {
   say(`At logon:    ${hasAutostart() ? autostartFile() : 'no'}`);
   const state = await running();
   say(`Background:  ${state ? `running (process ${state.pid}, version ${state.version})` : 'not running'}`);
-  let port;
-  try { port = readPort(); } catch { say(`Antigravity: not running (no ${portFile()})`); return; }
   try {
+    const port = readPort();
     const results = await evaluateEverywhere(PROBE_SCRIPT, port);
     say(`Antigravity: running, port ${port}, ${results.length} window(s)`);
     for (const r of results) {
@@ -210,24 +273,32 @@ async function status() {
       say(`  ${host ? `themed (${host.theme})` : 'not themed'}  ${r.url}`);
     }
   } catch (err) {
-    say(`Antigravity: ${err.message}`);
+    say(`Antigravity: ${existsSync(portFile()) ? err.message : `not running (no ${portFile()})`}`);
+  }
+  say();
+  if (installed && hasAutostart() && state) {
+    say('OK: installed and permanent.');
+  } else {
+    say(`Not permanent. Fix it with: ${NPX} install`);
+    process.exitCode = 1;
   }
 }
 
 function help() {
-  say(`${NAME} ${pkg.version}: Matte and Material 3 Expressive themes for Antigravity Desktop
+  say(`${NAME} ${pkg.version}: Matte, Paper, Nordic, and Material 3 Expressive themes for Antigravity Desktop
 
 Usage: ${NPX} <command>
 
-  install [--no-autostart]  Copy the themes to ${installDir()},
-                            start them at logon, and start them now
-  uninstall                 Remove the themes from Antigravity, the logon entry and that folder
-  start                     Start the background process that themes every window
+  install [--native]        Install the themes permanently.
+                            With --native: installs directly into Antigravity with ZERO background processes or servers.
+                            Default: copies themes to ${installDir()} and keeps them synced.
+  uninstall                 Remove the themes from Antigravity, the logon entry, and native app directory
+  start                     Start the background process that themes every window (not permanent)
   stop                      Stop it (open windows keep the theme until they reload)
-  on                        Apply the themes to the open windows once
+  on                        Apply the themes to the open windows once (not permanent)
   off                       Stop the background process and remove the themes from the open windows
   theme [key]               List the themes, or switch every window to one
-  status                    Show what is installed and running
+  status                    Show what is installed and running; exit code 1 if not permanent
   run [--dev]               Run the background process in this terminal (--dev reloads on file changes)`);
 }
 
@@ -235,7 +306,8 @@ const commands = {
   install, uninstall, on, off, theme, status, run, help,
   start: async () => {
     const state = await running() ?? await startBackground(path.join(ROOT, 'bin', 'cli.mjs'));
-    say(state ? `Running in the background (process ${state.pid}).` : `Could not start; see ${logFile()}`);
+    if (!state) fail(`could not start; see ${logFile()}`);
+    say(`Running in the background (process ${state.pid}).${hasAutostart() ? '' : ' Until the next logon; "install" makes it permanent.'}`);
   },
   stop: async () => say(await stopBackground() ? 'Stopped.' : 'Not running.'),
   '--version': () => say(pkg.version),

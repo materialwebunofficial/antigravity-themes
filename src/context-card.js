@@ -1,4 +1,4 @@
-// Context card: a "Context" section at the top of the Overview panel —
+// AGY context card: a "Context" section at the top of the Overview panel —
 // how full the conversation's context window is and what takes it up.
 // Two looks, chosen in CSS from the page's data-agy-theme (:host-context), so
 // a theme switch restyles it at once: Matte (the panel's own quiet rows, flat
@@ -17,7 +17,7 @@
 //           sees is added once (by step index) and kept per conversation in
 //           the agy-usage cookie (last 20; cookies are the one store that
 //           survives the app's port changing per launch). Reading the whole
-//           history instead costs ~12 KB a step; a conversation first
+//           history instead costs ~12 KB a step (SPEC); a conversation first
 //           seen part-way says which step its count starts from.
 // Warnings at 80% and 95% of the window: one quiet line under the summary.
 function agyContextCard() {
@@ -61,17 +61,23 @@ function agyContextCard() {
   const TOTALS_COOKIE = 'agy-usage';
   const TOTALS_MAX = 20;
   function readTotals() {
-    const raw = (document.cookie.match(/(?:^|;\s*)agy-usage=([^;]*)/) || [])[1];
-    if (!raw) return [];
-    return decodeURIComponent(raw).split('|').map((entry) => {
-      const [id, nums = ''] = entry.split(':');
-      const [input, output, cache, from, last] = nums.split('.').map((n) => parseInt(n, 36));
-      return { id, input, output, cache, from, last };
-    }).filter((r) => r.id && [r.input, r.output, r.cache, r.from, r.last].every(Number.isFinite));
+    try {
+      const raw = (document.cookie.match(/(?:^|;\s*)agy-usage=([^;]*)/) || [])[1];
+      if (!raw) return [];
+      return decodeURIComponent(raw).split('|').map((entry) => {
+        const [id, nums = ''] = entry.split(':');
+        const [input, output, cache, from, last] = nums.split('.').map((n) => parseInt(n, 36));
+        return { id, input, output, cache, from, last };
+      }).filter((r) => r.id && [r.input, r.output, r.cache, r.from, r.last].every(Number.isFinite));
+    } catch {
+      return [];
+    }
   }
   function writeTotals(list) {
-    const value = list.map((r) => `${r.id}:${[r.input, r.output, r.cache, r.from, r.last].map((n) => n.toString(36)).join('.')}`).join('|');
-    document.cookie = `${TOTALS_COOKIE}=${encodeURIComponent(value)}; Max-Age=31536000; Path=/; SameSite=Strict; Secure`;
+    try {
+      const value = list.map((r) => `${r.id}:${[r.input, r.output, r.cache, r.from, r.last].map((n) => n.toString(36)).join('.')}`).join('|');
+      document.cookie = `${TOTALS_COOKIE}=${encodeURIComponent(value)}; Max-Age=31536000; Path=/; SameSite=Strict; Secure`;
+    } catch {}
   }
   let totals = readTotals();
   function countTotal(slice) {

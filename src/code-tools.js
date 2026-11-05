@@ -1,4 +1,4 @@
-// Code tools: two toggles in every chat code block's header, beside
+// AGY code tools: two toggles in every chat code block's header, beside
 // "Copy code": Wrap lines (the app's default; off scrolls long lines
 // sideways) and Line numbers. One choice for all code blocks, kept in the
 // agy-code cookie like the theme, and applied as attributes on <html>.
@@ -40,8 +40,12 @@ function agyCodeTools() {
 
   // ---- The choice ---------------------------------------------------------------
   const readPref = () => {
-    const flags = ((document.cookie.match(/(?:^|;\s*)agy-code=([^;]*)/) || [])[1] || '').split('.');
-    return { nowrap: flags.includes('nowrap'), lines: flags.includes('lines') };
+    try {
+      const flags = ((document.cookie.match(/(?:^|;\s*)agy-code=([^;]*)/) || [])[1] || '').split('.');
+      return { nowrap: flags.includes('nowrap'), lines: flags.includes('lines') };
+    } catch {
+      return { nowrap: false, lines: false };
+    }
   };
   let pref = readPref();
   function apply() {
@@ -57,7 +61,9 @@ function agyCodeTools() {
     if (key === 'wrap') pref.nowrap = !pref.nowrap;
     else pref.lines = !pref.lines;
     const value = [pref.nowrap && 'nowrap', pref.lines && 'lines'].filter(Boolean).join('.');
-    document.cookie = `${COOKIE}=${value}; Max-Age=31536000; Path=/; SameSite=Strict; Secure`;
+    try {
+      document.cookie = `${COOKIE}=${value}; Max-Age=31536000; Path=/; SameSite=Strict; Secure`;
+    } catch {}
     apply();
   }
 
